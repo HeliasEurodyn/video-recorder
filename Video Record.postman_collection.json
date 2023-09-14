@@ -1,0 +1,91 @@
+{
+	"info": {
+		"_postman_id": "6b560cba-2eae-4f0c-9016-a57611a02431",
+		"name": "Video Record",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1647936"
+	},
+	"item": [
+		{
+			"name": "start",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"rtspURL\":\"rtsp://localhost:8554/city-traffic\"\r\n}\r\n\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:15705/api/video-recorder/start",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "15705",
+					"path": [
+						"api",
+						"video-recorder",
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:15705/api/video-recorder/list",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "15705",
+					"path": [
+						"api",
+						"video-recorder",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "stop",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": \"f018de31-1fef-4a92-ad63-ebce4e5ba7bb\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:15705/api/video-recorder/stop",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "15705",
+					"path": [
+						"api",
+						"video-recorder",
+						"stop"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
