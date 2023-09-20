@@ -1,11 +1,17 @@
 package com.ed.video_recorder.service;
 
-import com.ed.video_recorder.dto.VideoDataDTO;
-import com.ed.video_recorder.repository.VideoRecordRepository;
+import com.ed.video_recorder.dto.StreamDTO;
+import com.ed.video_recorder.mapper.StreamMapper;
+import com.ed.video_recorder.model.Stream;
+import com.ed.video_recorder.repository.RecordStreamRepository;
+import com.ed.video_recorder.repository.StreamRepository;
+import com.ed.video_recorder.thread.ThreadTupple;
 import com.ed.video_recorder.thread.VideoRecorderThread;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -16,51 +22,52 @@ public class VRecService {
 
     private final ExecutorService executorService;
 
-    private final VideoRecordRepository videoRecordRepository;
+    private final StreamMapper streamMapper;
 
-    private final Map<String, Future<?>> runningTasks = new HashMap<>();
-    private final Map<String, VideoRecorderThread> runningThreads = new HashMap<>();
+    private final RecordStreamRepository recordStreamRepository;
 
-    public VRecService(ExecutorService executorService,
-                       VideoRecordRepository videoRecordRepository) {
+    private final StreamRepository streamRepository;
+
+    private final Map<Long, ThreadTupple> runningTasks = new HashMap<>();
+//    private final Map<String, VideoRecorderThread> runningThreads = new HashMap<>();
+
+    public VRecService(ExecutorService executorService, StreamMapper streamMapper, RecordStreamRepository recordStreamRepository, StreamRepository streamRepository) {
         this.executorService = executorService;
-        this.videoRecordRepository = videoRecordRepository;
+        this.streamMapper = streamMapper;
+        this.recordStreamRepository = recordStreamRepository;
+        this.streamRepository = streamRepository;
     }
 
-    public VideoDataDTO start(VideoDataDTO videoDataDTO) {
-        var id = UUID.randomUUID().toString();
-        videoDataDTO.setId(id);
+    public StreamDTO start(StreamDTO streamDTO) {
 
-        VideoRecorderThread videoRecorderThread = new VideoRecorderThread(videoDataDTO, videoRecordRepository);
+        Stream stream = streamMapper.streamDTOToStream(streamDTO);
+        Stream savedStream = streamRepository.save(stream);
+
+        VideoRecorderThread videoRecorderThread = new VideoRecorderThread(stream, recordStreamRepository, streamRepository);
         Future<?> future = executorService.submit(videoRecorderThread);
-        runningTasks.put(id, future);
-        runningThreads.put(id, videoRecorderThread);
+        runningTasks.put(savedStream.getId(), new ThreadTupple(videoRecorderThread, future));
 
-        return videoDataDTO;
+
+        return streamMapper.streamToStreamDTO(savedStream);
     }
 
-    public VideoDataDTO stop(VideoDataDTO videoDataDTO) throws ExecutionException, InterruptedException {
-        if(!this.runningTasks.containsKey(videoDataDTO.getId())){
-            return videoDataDTO;
+    public StreamDTO stop(StreamDTO streamDTO) throws ExecutionException, InterruptedException {
+        if (!this.runningTasks.containsKey(streamDTO.getId())) {
+            return streamDTO;
         }
 
-        VideoRecorderThread completedThread = this.runningThreads.get(videoDataDTO.getId());
-        completedThread.stop();
+        ThreadTupple threadTupple = this.runningTasks.get(streamDTO.getId());
+        threadTupple.getVideoRecorderThread().stop();
+        threadTupple.getFuture().cancel(true);
 
-        Future<?> future = this.runningTasks.get(videoDataDTO.getId());
-        future.cancel(true);
+        this.runningTasks.remove(streamDTO.getId());
 
-        this.runningTasks.remove(videoDataDTO.getId());
-        this.runningThreads.remove(videoDataDTO.getId());
-
-        return videoDataDTO;
+        return streamDTO;
     }
 
-    public List<VideoDataDTO> list() {
-        return runningThreads.values()
-                .stream()
-                .map(thread -> thread.getVideoDataDTO())
-                .filter(videoDataDTO -> videoDataDTO != null)
-                .collect(Collectors.toList());
+    public List<StreamDTO> list() {
+        List<Stream> allStreams = streamRepository.findAll();
+        return allStreams.stream().map(streamMapper::streamToStreamDTO).collect(Collectors.toList());
     }
+
 }

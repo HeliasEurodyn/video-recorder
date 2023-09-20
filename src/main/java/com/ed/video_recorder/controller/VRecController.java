@@ -1,6 +1,6 @@
 package com.ed.video_recorder.controller;
 
-import com.ed.video_recorder.dto.VideoDataDTO;
+import com.ed.video_recorder.dto.StreamDTO;
 import com.ed.video_recorder.service.VRecService;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,17 +18,17 @@ public class VRecController {
     }
 
     @PostMapping("start")
-    public VideoDataDTO start(@RequestBody VideoDataDTO videoDataDTO) {
-        return vRecService.start(videoDataDTO);
+    public StreamDTO start(@RequestBody StreamDTO streamDTO) {
+        return vRecService.start(streamDTO);
     }
 
     @PostMapping("stop")
-    public VideoDataDTO stop(@RequestBody VideoDataDTO videoDataDTO) throws ExecutionException, InterruptedException {
-        return vRecService.stop(videoDataDTO);
+    public StreamDTO stop(@RequestBody StreamDTO streamDTO) throws ExecutionException, InterruptedException {
+        return vRecService.stop(streamDTO);
     }
 
     @GetMapping("list")
-    public List<VideoDataDTO> findChatMessages() {
+    public List<StreamDTO> findChatMessages() {
         return vRecService.list();
     }
 }

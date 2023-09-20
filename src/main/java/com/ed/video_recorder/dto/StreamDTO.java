@@ -11,9 +11,9 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Accessors(chain = true)
-public class VideoDataDTO {
+public class StreamDTO {
 
-    private String id;
+    private Long id;
 
     private String rtspURL;
 

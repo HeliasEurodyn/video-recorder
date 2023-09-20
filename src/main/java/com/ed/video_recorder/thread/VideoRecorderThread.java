@@ -1,75 +1,83 @@
 package com.ed.video_recorder.thread;
 
-import com.ed.video_recorder.dto.VideoDataDTO;
-import com.ed.video_recorder.repository.VideoRecordRepository;
-import lombok.Getter;
+import com.ed.video_recorder.model.RecordedStream;
+import com.ed.video_recorder.model.Stream;
+import com.ed.video_recorder.repository.RecordStreamRepository;
+import com.ed.video_recorder.repository.StreamRepository;
 import nu.pattern.OpenCV;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 
-@Getter
 public class VideoRecorderThread implements Runnable {
 
-    private final VideoRecordRepository videoRecordRepository;
-
+    private static final String videosPath = "C:\\Users\\kaftz\\Fake-RTSP-Stream-main\\video-recording\\";
+    private static final int maxRecordCount = 1;
+    private static final long captureDurationMs = 10000;
+    private final RecordStreamRepository recordStreamRepository;
+    private final StreamRepository streamRepository;
     private volatile Boolean stopRequested = false;
 
-    private VideoDataDTO videoDataDTO;
+    private volatile Boolean recordingEnded = false;
+    private final Stream stream;
 
-    private static final String videosPath = "C:\\Users\\user\\Pictures\\Saved Pictures\\";
 
-    private static final int numFilesToKeep = 10;
 
-    private static final long captureDurationMs = 10000;
-
-//    private static final long captureDurationMs = 10000;
-
-    public VideoRecorderThread(VideoDataDTO videoDataDTO, VideoRecordRepository videoRecordRepository){
-        this.videoDataDTO = videoDataDTO;
-        this.videoRecordRepository = videoRecordRepository;
-        this.createFolder(videoDataDTO.getId());
+    public VideoRecorderThread(Stream stream, RecordStreamRepository recordStreamRepository, StreamRepository streamRepository) {
+        this.stream = stream;
+        this.recordStreamRepository = recordStreamRepository;
+        this.streamRepository = streamRepository;
+        this.createFolder(stream.getId().toString());
     }
 
     public void stop() {
         stopRequested = true;
+        recordingEnded = true;
     }
 
     @Override
     public void run() {
+        //long startTime = System.currentTimeMillis();
+
         while (!stopRequested) {
             this.cleanupFolder();
-            this.saveSteam();
+            this.saveRecordedStreamToFs();
+
         }
     }
 
-    public void saveSteam() {
+    public void saveRecordedStreamToFs() {
 
         OpenCV.loadShared();
 
         // RTSP URL for your camera
         // String rtspURL = "rtsp://localhost:8554/city-traffic";
-        String rtspURL = this.videoDataDTO.getRtspURL();
+        String url = this.stream.getRtspURL();
 
         // Specify the folder where you want to save the video
-        String outputFolder = videosPath + this.videoDataDTO.getId();
+        String outputFolder = videosPath + this.stream.getId();
 
         // Create the full path for the output file
         // String outputFileName = Paths.get(outputFolder, "output_video.mp4").toString();
-        String outputFileName = Paths.get(outputFolder,  getCurrentDatetime()+  ".mp4").toString();
+        String filename = getCurrentDatetime() + ".mp4";
+        String outputFileName = Paths.get(outputFolder, filename).toString();
+        String generatedFilename = filename;
+//        videoFileCounter++;
 
         // Create a VideoCapture object to open the camera stream
-        VideoCapture capture = new VideoCapture(rtspURL);
+        VideoCapture capture = new VideoCapture(url);
 
         if (!capture.isOpened()) {
             System.out.println("Error: Could not open camera stream.mp4");
@@ -77,7 +85,7 @@ public class VideoRecorderThread implements Runnable {
         }
 
         // Define the output file and codec
-        int fourcc = VideoWriter.fourcc('H','2','6','4');
+        int fourcc = VideoWriter.fourcc('H', '2', '6', '4');
 
         // Create a VideoWriter to save the video
         VideoWriter writer = new VideoWriter(outputFileName, fourcc, 20.0, new org.opencv.core.Size(1920, 1080), true);
@@ -89,7 +97,7 @@ public class VideoRecorderThread implements Runnable {
 
         // Capture frames for 10 minutes
         long startTime = System.currentTimeMillis();
-
+        Instant startTimeInstant = Instant.ofEpochMilli(startTime);
         Mat frame = new Mat();
         while (System.currentTimeMillis() - startTime < captureDurationMs) {
             if (capture.read(frame)) {
@@ -102,6 +110,8 @@ public class VideoRecorderThread implements Runnable {
 
         capture.release();
         writer.release();
+
+        saveRecordedStreamToDb(outputFolder, filename, startTimeInstant, startTimeInstant.plusMillis(captureDurationMs));
 
         System.out.println("Video capture completed.");
     }
@@ -126,7 +136,7 @@ public class VideoRecorderThread implements Runnable {
 
     public void cleanupFolder() {
 
-        File folder = new File(videosPath + this.videoDataDTO.getId());
+        File folder = new File(videosPath + this.stream.getId());
 
         if (folder.exists() && folder.isDirectory()) {
 
@@ -142,18 +152,22 @@ public class VideoRecorderThread implements Runnable {
             });
 
             // Delete all files except the last N
-            int numFilesToDelete = files.length - numFilesToKeep;
+            int numFilesToDelete = files.length - maxRecordCount;
             for (int i = 0; i < numFilesToDelete; i++) {
                 File fileToDelete = files[i];
                 if (fileToDelete.delete()) {
+                    recordStreamRepository.deleteByFileNameEqualsAndStreamIdEquals(fileToDelete.getName(), this.stream.getId());
                     System.out.println("Deleted file: " + fileToDelete.getName());
                 } else {
                     System.err.println("Failed to delete file: " + fileToDelete.getName());
                 }
             }
+
         } else {
             System.out.println("The specified folder does not exist or is not a directory.");
         }
+
+
     }
 
     public String getCurrentDatetime() {
@@ -166,6 +180,25 @@ public class VideoRecorderThread implements Runnable {
         String formattedDateTime = currentDateTime.format(formatter);
 
         return formattedDateTime;
+    }
+
+    private void saveRecordedStreamToDb(String filePath, String fileName, Instant startedOn, Instant stopedOn) {
+        RecordedStream recordedStream = new RecordedStream();
+
+
+        // Set the file path and name
+        recordedStream.setFilePath(filePath);
+        recordedStream.setFileName(fileName);
+        recordedStream.setStartedOn(startedOn);
+        recordedStream.setStoppedOn(stopedOn);
+
+        Stream stream = streamRepository.findById(this.stream.getId()).orElseThrow(() -> new EntityNotFoundException("Stream not found with id: " + this.stream.getId()));
+
+        recordedStream.setStream(stream);
+
+        // Save the RecordedStream entity to the database
+        recordStreamRepository.save(recordedStream);
+
     }
 
 }
