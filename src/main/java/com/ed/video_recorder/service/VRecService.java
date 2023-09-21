@@ -29,7 +29,7 @@ public class VRecService {
     private final StreamRepository streamRepository;
 
     private final Map<Long, ThreadTupple> runningTasks = new HashMap<>();
-//    private final Map<String, VideoRecorderThread> runningThreads = new HashMap<>();
+
 
     public VRecService(ExecutorService executorService, StreamMapper streamMapper, RecordStreamRepository recordStreamRepository, StreamRepository streamRepository) {
         this.executorService = executorService;

@@ -24,7 +24,7 @@ import java.util.Comparator;
 public class VideoRecorderThread implements Runnable {
 
     private static final String videosPath = "C:\\Users\\kaftz\\Fake-RTSP-Stream-main\\video-recording\\";
-    private static final int maxRecordCount = 1;
+    private static final int maxRecordCount = 2;
     private static final long captureDurationMs = 10000;
     private final RecordStreamRepository recordStreamRepository;
     private final StreamRepository streamRepository;
