@@ -19,7 +19,7 @@ public class VRecController {
 
     @PostMapping("start")
     public StreamDTO start(@RequestBody StreamDTO streamDTO) {
-        return vRecService.start(streamDTO);
+        return vRecService.saveAndStart(streamDTO);
     }
 
     @PostMapping("stop")

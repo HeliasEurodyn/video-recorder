@@ -8,12 +8,9 @@ import nu.pattern.OpenCV;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
-
+import com.ed.video_recorder.config.AppConfig;
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -23,13 +20,9 @@ import java.util.Comparator;
 
 public class VideoRecorderThread implements Runnable {
 
-    private static final String videosPath = "C:\\Users\\kaftz\\Fake-RTSP-Stream-main\\video-recording\\";
-    private static final int maxRecordCount = 2;
-    private static final long captureDurationMs = 10000;
     private final RecordStreamRepository recordStreamRepository;
     private final StreamRepository streamRepository;
     private volatile Boolean stopRequested = false;
-
     private volatile Boolean recordingEnded = false;
     private final Stream stream;
 
@@ -39,7 +32,6 @@ public class VideoRecorderThread implements Runnable {
         this.stream = stream;
         this.recordStreamRepository = recordStreamRepository;
         this.streamRepository = streamRepository;
-        this.createFolder(stream.getId().toString());
     }
 
     public void stop() {
@@ -49,8 +41,6 @@ public class VideoRecorderThread implements Runnable {
 
     @Override
     public void run() {
-        //long startTime = System.currentTimeMillis();
-
         while (!stopRequested) {
             this.cleanupFolder();
             this.saveRecordedStreamToFs();
@@ -67,13 +57,13 @@ public class VideoRecorderThread implements Runnable {
         String url = this.stream.getRtspURL();
 
         // Specify the folder where you want to save the video
-        String outputFolder = videosPath + this.stream.getId();
+        String outputFolder = AppConfig.getVideosPath() + this.stream.getId();
 
         // Create the full path for the output file
         // String outputFileName = Paths.get(outputFolder, "output_video.mp4").toString();
         String filename = getCurrentDatetime() + ".mp4";
         String outputFileName = Paths.get(outputFolder, filename).toString();
-        String generatedFilename = filename;
+//        String generatedFilename = filename;
 //        videoFileCounter++;
 
         // Create a VideoCapture object to open the camera stream
@@ -99,7 +89,7 @@ public class VideoRecorderThread implements Runnable {
         long startTime = System.currentTimeMillis();
         Instant startTimeInstant = Instant.ofEpochMilli(startTime);
         Mat frame = new Mat();
-        while (System.currentTimeMillis() - startTime < captureDurationMs) {
+        while (System.currentTimeMillis() - startTime < AppConfig.getCaptureDurationMs()) {
             if (capture.read(frame)) {
                 writer.write(frame);
             } else {
@@ -111,32 +101,15 @@ public class VideoRecorderThread implements Runnable {
         capture.release();
         writer.release();
 
-        saveRecordedStreamToDb(outputFolder, filename, startTimeInstant, startTimeInstant.plusMillis(captureDurationMs));
+        saveRecordedStreamToDb(outputFolder, filename, startTimeInstant, startTimeInstant.plusMillis(AppConfig.getCaptureDurationMs()));
 
         System.out.println("Video capture completed.");
     }
 
-    public void createFolder(String folderName) {
-
-        // Create a Path object representing the directory
-        Path folder = Paths.get(videosPath + folderName);
-
-        // Check if the directory doesn't exist and create it
-        if (!Files.exists(folder)) {
-            try {
-                Files.createDirectories(folder); // Create the directory and any missing parent directories
-                System.out.println("Folder created successfully.");
-            } catch (IOException e) {
-                System.err.println("Failed to create folder: " + e.getMessage());
-            }
-        } else {
-            System.out.println("Folder already exists.");
-        }
-    }
 
     public void cleanupFolder() {
 
-        File folder = new File(videosPath + this.stream.getId());
+        File folder = new File(AppConfig.getVideosPath() + this.stream.getId());
 
         if (folder.exists() && folder.isDirectory()) {
 
@@ -152,7 +125,7 @@ public class VideoRecorderThread implements Runnable {
             });
 
             // Delete all files except the last N
-            int numFilesToDelete = files.length - maxRecordCount;
+            int numFilesToDelete = files.length - AppConfig.getMaxRecordCount();
             for (int i = 0; i < numFilesToDelete; i++) {
                 File fileToDelete = files[i];
                 if (fileToDelete.delete()) {
