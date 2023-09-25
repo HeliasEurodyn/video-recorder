@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -44,11 +45,22 @@ public class VRecService {
     }
 
     public StreamDTO  saveAndStart(StreamDTO streamDTO){
+
         Stream stream = streamMapper.streamDTOToStream(streamDTO);
-        Stream savedStream = streamRepository.save(stream);
-        this.createFolder(stream.getId().toString());
-        start(savedStream);
-        return  streamMapper.streamToStreamDTO(savedStream);
+        Optional<Stream> existingStream = streamRepository.findById(stream.getId());
+
+        if (existingStream.isPresent()) {
+            Stream savedStream = existingStream.get();
+            savedStream.setStatus("running");
+            start(savedStream);
+            return streamMapper.streamToStreamDTO(savedStream);
+        } else {
+            stream.setStatus("running");
+            Stream savedStream = streamRepository.save(stream);
+            this.createFolder(savedStream.getId().toString());
+            start(savedStream);
+            return streamMapper.streamToStreamDTO(savedStream);
+        }
     }
 
     public void start(Stream stream) {
@@ -68,6 +80,12 @@ public class VRecService {
         ThreadTupple threadTupple = this.runningTasks.get(streamDTO.getId());
         threadTupple.getVideoRecorderThread().stop();
         threadTupple.getFuture().cancel(true);
+
+        Stream stream = streamRepository.findById(streamDTO.getId()).orElse(null);
+        if (stream != null) {
+            stream.setStatus("stopped");
+            streamRepository.save(stream);
+        }
 
         this.runningTasks.remove(streamDTO.getId());
 

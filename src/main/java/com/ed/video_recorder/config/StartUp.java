@@ -25,7 +25,7 @@ public class StartUp implements ApplicationListener<ContextRefreshedEvent> {
     @Override
     @Transactional
     public void onApplicationEvent(final ContextRefreshedEvent event) {
-        List<Stream> streams = streamRepository.findAll();
+        List<Stream> streams = streamRepository.findByStatus("running");
 
         for (Stream stream : streams) {
             vRecService.start(stream);

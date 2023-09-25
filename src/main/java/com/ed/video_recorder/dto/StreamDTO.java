@@ -17,4 +17,6 @@ public class StreamDTO {
 
     private String rtspURL;
 
+    private String status;
+
 }

@@ -18,5 +18,8 @@ public class Stream {
     @Column
     private String rtspURL;
 
+    @Column
+    private String status;
+
 
 }
