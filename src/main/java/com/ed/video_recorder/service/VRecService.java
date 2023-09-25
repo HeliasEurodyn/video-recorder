@@ -52,6 +52,7 @@ public class VRecService {
         if (existingStream.isPresent()) {
             Stream savedStream = existingStream.get();
             savedStream.setStatus("running");
+            streamRepository.save(savedStream);
             start(savedStream);
             return streamMapper.streamToStreamDTO(savedStream);
         } else {
