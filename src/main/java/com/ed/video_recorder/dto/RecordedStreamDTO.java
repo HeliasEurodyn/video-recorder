@@ -28,7 +28,5 @@ public class RecordedStreamDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Instant stopedOn;
 
-    private String streamId;
-
 
 }

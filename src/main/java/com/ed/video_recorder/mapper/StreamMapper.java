@@ -22,5 +22,7 @@ public interface StreamMapper {
 
     RecordedStream recordStreamDTOtoRecordStream(RecordedStreamDTO recordedStreamDTO);
 
+    RecordedStreamDTO recordedStreamToRecordedStreamDTO(RecordedStream recordedStream);
+
 
 }

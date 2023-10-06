@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 
 @Repository
 public interface RecordStreamRepository extends JpaRepository<RecordedStream, Long> {
@@ -13,6 +15,10 @@ public interface RecordStreamRepository extends JpaRepository<RecordedStream, Lo
     @Transactional
     @Modifying
     void deleteByFileNameEqualsAndStreamIdEquals(String filename, Long id);
+
+    List<RecordedStream> findByStreamId(Long streamId);
+
+    void deleteByStreamIdAndFileName(Long streamId, String fileName);
 
 
 }
