@@ -58,7 +58,7 @@ public class VideoController {
 //                });
 //    }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:50574"})
     @GetMapping("/live2.mp4/{streamId}/{fileName:.+}")
     public ResponseEntity<Resource> streamVideo(@PathVariable String streamId, @PathVariable String fileName) {
         String videoFolderPath = "C:\\Users\\kaftz\\Fake-RTSP-Stream-main\\video-recording\\" + streamId + "\\" + fileName;

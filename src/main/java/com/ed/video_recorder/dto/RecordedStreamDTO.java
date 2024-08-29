@@ -26,7 +26,7 @@ public class RecordedStreamDTO {
     private Instant startedOn;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Instant stopedOn;
+    private Instant stoppedOn;
 
 
 }
