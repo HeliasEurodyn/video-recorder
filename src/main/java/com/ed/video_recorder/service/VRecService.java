@@ -35,8 +35,6 @@ public class VRecService {
 
     private final ExecutorService executorService;
 
-    private final StreamCheckService streamCheckService;
-
     private final StreamMapper streamMapper;
 
     private final RecordStreamRepository recordStreamRepository;
@@ -49,13 +47,11 @@ public class VRecService {
     public VRecService(ExecutorService executorService,
                        StreamMapper streamMapper,
                        RecordStreamRepository recordStreamRepository,
-                       StreamRepository streamRepository,
-                       StreamCheckService streamCheckService) {
+                       StreamRepository streamRepository) {
         this.executorService = executorService;
         this.streamMapper = streamMapper;
         this.recordStreamRepository = recordStreamRepository;
         this.streamRepository = streamRepository;
-        this.streamCheckService = streamCheckService;
     }
 
     public StreamDTO  saveAndStart(StreamDTO streamDTO){
@@ -91,10 +87,6 @@ public class VRecService {
 
     public void start(Stream stream) {
 
-//        String rtspUrl = stream.getRtspURL();
-//        if (!streamCheckService.isStreamAlive(rtspUrl)) {
-//            throw new RuntimeException("RTSP stream is not available: " + rtspUrl);
-//        }
 
         VideoRecorderThread videoRecorderThread = new VideoRecorderThread(stream, recordStreamRepository, streamRepository);
         Future<?> future = executorService.submit(videoRecorderThread);
