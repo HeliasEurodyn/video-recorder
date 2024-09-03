@@ -10,7 +10,9 @@ import com.ed.video_recorder.repository.RecordStreamRepository;
 import com.ed.video_recorder.repository.StreamRepository;
 import com.ed.video_recorder.thread.ThreadTupple;
 import com.ed.video_recorder.thread.VideoRecorderThread;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +29,13 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Service
+
 public class VRecService {
 
+
     private final ExecutorService executorService;
+
+    private final StreamCheckService streamCheckService;
 
     private final StreamMapper streamMapper;
 
@@ -39,12 +45,17 @@ public class VRecService {
 
     private final Map<Long, ThreadTupple> runningTasks = new HashMap<>();
 
-
-    public VRecService(ExecutorService executorService, StreamMapper streamMapper, RecordStreamRepository recordStreamRepository, StreamRepository streamRepository) {
+    @Autowired
+    public VRecService(ExecutorService executorService,
+                       StreamMapper streamMapper,
+                       RecordStreamRepository recordStreamRepository,
+                       StreamRepository streamRepository,
+                       StreamCheckService streamCheckService) {
         this.executorService = executorService;
         this.streamMapper = streamMapper;
         this.recordStreamRepository = recordStreamRepository;
         this.streamRepository = streamRepository;
+        this.streamCheckService = streamCheckService;
     }
 
     public StreamDTO  saveAndStart(StreamDTO streamDTO){
@@ -79,11 +90,11 @@ public class VRecService {
     }
 
     public void start(Stream stream) {
-//        // Create a folder for existing recordings
-//        createFolder(stream.getId().toString());
-//
-//        // Create a folder for consolidated recordings (if it doesn't exist)
-//        createFolder("consolidated/" + stream.getId().toString());
+
+//        String rtspUrl = stream.getRtspURL();
+//        if (!streamCheckService.isStreamAlive(rtspUrl)) {
+//            throw new RuntimeException("RTSP stream is not available: " + rtspUrl);
+//        }
 
         VideoRecorderThread videoRecorderThread = new VideoRecorderThread(stream, recordStreamRepository, streamRepository);
         Future<?> future = executorService.submit(videoRecorderThread);
@@ -120,6 +131,19 @@ public class VRecService {
         return recordedStreams.stream().map(streamMapper::recordedStreamToRecordedStreamDTO).collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteStream(Long id) {
+        Optional<Stream> streamOptional = streamRepository.findById(id);
+        if (streamOptional.isPresent()) {
+            Stream stream = streamOptional.get();
+            recordStreamRepository.deleteByStreamId(id);
+            streamRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Stream not found with id " + id);
+        }
+    }
+
+
     public void createFolder(String folderName) {
 
         // Create a Path object representing the directory
@@ -138,62 +162,6 @@ public class VRecService {
         }
     }
 
-//    public void consolidateRecordings(Long streamId) {
-//        // Define the paths for the existing and consolidated folders
-//        String existingFolderPath = Paths.get(AppConfig.getVideosPath(), streamId.toString()).toString();
-//        String consolidatedFolderPath = Paths.get(AppConfig.getVideosPath(), "consolidated", streamId.toString()).toString();
-//
-//        // Create the consolidated folder if it doesn't exist
-//        createFolder(consolidatedFolderPath);
-//
-//        // Get a list of recording files in the existing folder
-//        File existingFolder = new File(existingFolderPath);
-//
-//        if (existingFolder.exists() && existingFolder.isDirectory()) {
-//            // Get a list of recording files in the existing folder
-//            File[] recordingFiles = existingFolder.listFiles();
-//
-//            if (recordingFiles != null && recordingFiles.length > 0) {
-//                // Create a file list for FFmpeg to concatenate
-//                StringBuilder fileList = new StringBuilder();
-//                for (File recordingFile : recordingFiles) {
-//                    fileList.append("file '").append(recordingFile.getAbsolutePath()).append("'\n");
-//                }
-//
-//                try {
-//                    // Create a file containing the list of recording file paths
-//                    String fileListPath = Paths.get(consolidatedFolderPath, "file_list.txt").toString();
-//                    Files.write(Paths.get(fileListPath), fileList.toString().getBytes());
-//
-//                    // Use FFmpeg to concatenate the recordings into a single video
-//                    String outputVideoPath = Paths.get(consolidatedFolderPath, "consolidated_video.mp4").toString();
-//                    ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-f", "concat", "-safe", "0", "-i", fileListPath, "-c:v", "copy", "-c:a", "copy", outputVideoPath);
-//                    Process process = processBuilder.start();
-//                    process.waitFor();
-//
-//                    // Delete the file list
-//                    Files.delete(Paths.get(fileListPath));
-//
-//                    // Optionally, you can delete the individual recording files if needed
-//                    // for (File recordingFile : recordingFiles) {
-//                    //     recordingFile.delete();
-//                    // }
-//                    System.out.println("Consolidation completed successfully.");
-//                } catch (IOException | InterruptedException e) {
-//                    System.err.println("Failed to consolidate recordings: " + e.getMessage());
-//                }
-//            } else {
-//                System.err.println("No recording files found in the folder.");
-//            }
-//        } else {
-//            System.err.println("The existing folder does not exist or is not a directory.");
-//        }
-//    }
-
-//    public void createRecordingFolders(Long streamId) {
-//        createFolder(streamId.toString()); // Existing folder for recordings
-//        createFolder("consolidated/" + streamId.toString()); // New folder for consolidated recordings
-//    }
 
 
 }

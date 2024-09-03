@@ -28,29 +28,36 @@ public class VRecController {
         this.vRecService = vRecService;
     }
 
-    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:50574"})
+    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:56202"})
     @Validated
     @PostMapping("start")
     public StreamDTO start(@Valid @RequestBody StreamDTO streamDTO) {
         return vRecService.saveAndStart(streamDTO);
     }
 
-    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:50574"})
+    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:56202"})
     @PostMapping("stop")
     public StreamDTO stop(@RequestBody StreamDTO streamDTO) throws ExecutionException, InterruptedException {
         return vRecService.stop(streamDTO);
     }
-    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:50574"})
+    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:56202"})
     @GetMapping(value = "list-streams", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StreamDTO> streams() {
         return vRecService.streams();
     }
 
-    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:50574"})
+    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:56202"})
     @GetMapping(value = "list-recordedStreams/{streamId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<RecordedStreamDTO> recordedStreams(@PathVariable Long streamId) {
         return vRecService.getRecordedStreamsByStreamId(streamId);
     }
+
+    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:56202"})
+    @DeleteMapping("delete/{id}")
+    public void deleteStream(@PathVariable Long id) {
+      vRecService.deleteStream(id);
+    }
+
 
 
 //    @PostMapping("consolidate/{streamId}")

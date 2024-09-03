@@ -20,5 +20,7 @@ public interface RecordStreamRepository extends JpaRepository<RecordedStream, Lo
 
     void deleteByStreamIdAndFileName(Long streamId, String fileName);
 
+    void deleteByStreamId(Long streamId);
+
 
 }
