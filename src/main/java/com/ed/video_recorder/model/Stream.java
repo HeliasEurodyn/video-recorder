@@ -21,5 +21,20 @@ public class Stream {
     @Column
     private String status;
 
+    @Column( name = "msg_id")
+    private String msgId;
+
+    @Column( name = "msg_timestamp")
+    private String msgTimestamp;
+
+    @Column
+    private String sender;
+
+    @Column
+    private String type;
+
+    @Column
+    private String description;
+
 
 }

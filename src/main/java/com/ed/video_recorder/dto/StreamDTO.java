@@ -1,5 +1,6 @@
 package com.ed.video_recorder.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,5 +22,18 @@ public class StreamDTO {
     private String rtspURL;
 
     private String status;
+
+    @JsonAlias("msg_id")
+    private String msgId;
+
+    @JsonAlias("msg_timestamp")
+    private String msgTimestamp;
+
+    private String sender;
+
+    private String type;
+
+    private String description;
+
 
 }
