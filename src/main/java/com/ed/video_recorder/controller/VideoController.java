@@ -33,7 +33,7 @@ public class VideoController {
     @CrossOrigin(origins = {"*"})
     @GetMapping("/live2.mp4/{streamId}/{fileName:.+}")
     public ResponseEntity<Resource> streamVideo(@PathVariable String streamId, @PathVariable String fileName) {
-        String videoFolderPath =  videosPath + streamId + File.separator + fileName;
+        String videoFolderPath =  videosPath + File.separator + streamId + File.separator + fileName;
         File videoFile = new File(videoFolderPath);
 
         if (videoFile.exists()) {
