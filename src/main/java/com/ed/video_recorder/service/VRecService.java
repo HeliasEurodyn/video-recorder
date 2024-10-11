@@ -139,7 +139,7 @@ public class VRecService {
     public void createFolder(String folderName) {
 
         // Create a Path object representing the directory
-        Path folder = Paths.get(AppConfig.getVideosPath() + folderName);
+        Path folder = Paths.get(AppConfig.getVideosPath() + File.separator + folderName);
 
         // Check if the directory doesn't exist and create it
         if (!Files.exists(folder)) {

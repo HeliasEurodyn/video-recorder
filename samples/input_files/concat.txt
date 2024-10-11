@@ -1,2 +1,0 @@
-file testsrc_01.mpg
-file testsrc_02.mpg

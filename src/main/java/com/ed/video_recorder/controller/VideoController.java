@@ -5,6 +5,7 @@ import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.PipeOutput;
 import lombok.extern.log4j.Log4j2;
 import org.opencv.videoio.VideoWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +28,12 @@ import java.util.concurrent.TimeUnit;
 @Log4j2
 public class VideoController {
 
-    @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:50574"})
+    @Value("${videosPath}")
+    private String videosPath;
+    @CrossOrigin(origins = {"*"})
     @GetMapping("/live2.mp4/{streamId}/{fileName:.+}")
     public ResponseEntity<Resource> streamVideo(@PathVariable String streamId, @PathVariable String fileName) {
-        String videoFolderPath = "C:\\Users\\kaftz\\Fake-RTSP-Stream-main\\video-recording\\" + streamId + "\\" + fileName;
+        String videoFolderPath =  videosPath + streamId + File.separator + fileName;
         File videoFile = new File(videoFolderPath);
 
         if (videoFile.exists()) {

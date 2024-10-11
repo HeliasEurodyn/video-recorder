@@ -60,7 +60,7 @@ public class VideoRecorderThread implements Runnable {
         String url = this.stream.getRtspURL();
 
         // Specify the folder where you want to save the video
-        String outputFolder = AppConfig.getVideosPath() + this.stream.getId();
+        String outputFolder = AppConfig.getVideosPath() + File.separator + this.stream.getId();
 
         // Create the full path for the output file
         // String outputFileName = Paths.get(outputFolder, "output_video.mp4").toString();
@@ -112,7 +112,7 @@ public class VideoRecorderThread implements Runnable {
 
     public void cleanupFolder() {
 
-        File folder = new File(AppConfig.getVideosPath() + this.stream.getId());
+        File folder = new File(AppConfig.getVideosPath() + File.separator + this.stream.getId());
 
         if (folder.exists() && folder.isDirectory()) {
 
