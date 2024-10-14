@@ -8,7 +8,8 @@ import nu.pattern.OpenCV;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
-import com.ed.video_recorder.config.AppConfig;
+import org.springframework.beans.factory.annotation.Value;
+
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.nio.file.Paths;
@@ -19,6 +20,15 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class VideoRecorderThread implements Runnable {
+
+    @Value("${captureDurationMs}")
+    private  Long captureDurationMs;
+
+    @Value("${maxRecordCount}")
+    private  Integer maxRecordCount;
+
+    @Value("${videosPath}")
+    private String videoFolder;
 
     private final RecordStreamRepository recordStreamRepository;
     private final StreamRepository streamRepository;
@@ -60,7 +70,7 @@ public class VideoRecorderThread implements Runnable {
         String url = this.stream.getRtspURL();
 
         // Specify the folder where you want to save the video
-        String outputFolder = AppConfig.getVideosPath() + File.separator + this.stream.getId();
+        String outputFolder = videoFolder + File.separator + this.stream.getId();
 
         // Create the full path for the output file
         // String outputFileName = Paths.get(outputFolder, "output_video.mp4").toString();
@@ -92,7 +102,7 @@ public class VideoRecorderThread implements Runnable {
         long startTime = System.currentTimeMillis();
         Instant startTimeInstant = Instant.ofEpochMilli(startTime);
         Mat frame = new Mat();
-        while (System.currentTimeMillis() - startTime < AppConfig.getCaptureDurationMs()) {
+        while (System.currentTimeMillis() - startTime < captureDurationMs) {
             if (capture.read(frame)) {
                 writer.write(frame);
             } else {
@@ -104,7 +114,7 @@ public class VideoRecorderThread implements Runnable {
         capture.release();
         writer.release();
 
-        saveRecordedStreamToDb(outputFolder, filename, startTimeInstant, startTimeInstant.plusMillis(AppConfig.getCaptureDurationMs()));
+        saveRecordedStreamToDb(outputFolder, filename, startTimeInstant, startTimeInstant.plusMillis(captureDurationMs));
 
         System.out.println("Video capture completed.");
     }
@@ -112,7 +122,7 @@ public class VideoRecorderThread implements Runnable {
 
     public void cleanupFolder() {
 
-        File folder = new File(AppConfig.getVideosPath() + File.separator + this.stream.getId());
+        File folder = new File(videoFolder + File.separator + this.stream.getId());
 
         if (folder.exists() && folder.isDirectory()) {
 
@@ -128,7 +138,7 @@ public class VideoRecorderThread implements Runnable {
             });
 
             // Delete all files except the last N
-            int numFilesToDelete = files.length - AppConfig.getMaxRecordCount();
+            int numFilesToDelete = files.length - maxRecordCount;
             for (int i = 0; i < numFilesToDelete; i++) {
                 File fileToDelete = files[i];
                 if (fileToDelete.delete()) {

@@ -18,7 +18,7 @@ public class StartupApplicationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        createDirectoryIfNotExists();
+       createDirectoryIfNotExists();
     }
 
     private void createDirectoryIfNotExists() {

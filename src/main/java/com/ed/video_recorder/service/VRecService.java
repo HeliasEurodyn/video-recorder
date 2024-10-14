@@ -1,6 +1,5 @@
 package com.ed.video_recorder.service;
 
-import com.ed.video_recorder.config.AppConfig;
 import com.ed.video_recorder.dto.RecordedStreamDTO;
 import com.ed.video_recorder.dto.StreamDTO;
 import com.ed.video_recorder.mapper.StreamMapper;
@@ -11,6 +10,7 @@ import com.ed.video_recorder.repository.StreamRepository;
 import com.ed.video_recorder.thread.ThreadTupple;
 import com.ed.video_recorder.thread.VideoRecorderThread;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
 
 public class VRecService {
 
+
+    @Value("${videosPath}")
+    private String videoFolder;
 
     private final ExecutorService executorService;
 
@@ -139,7 +142,9 @@ public class VRecService {
     public void createFolder(String folderName) {
 
         // Create a Path object representing the directory
-        Path folder = Paths.get(AppConfig.getVideosPath() + File.separator + folderName);
+        Path folder = Paths.get(videoFolder + File.separator + folderName);
+        System.out.println("folder from create folder");
+        System.out.println(folder);
 
         // Check if the directory doesn't exist and create it
         if (!Files.exists(folder)) {
@@ -153,7 +158,5 @@ public class VRecService {
             System.out.println("Folder already exists.");
         }
     }
-
-
 
 }
